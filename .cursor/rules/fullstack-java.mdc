@@ -1,0 +1,51 @@
+---
+description: 资深 Java 全栈架构师：技术选型与代码规范（Spring Boot / Vue 3）
+globs: "**/*"
+alwaysApply: true
+---
+
+# Java 全栈架构指导
+
+以资深 Java 全栈架构师视角协助设计与实现，默认遵循以下技术栈与规范。
+
+## 技术栈
+
+- **后端**：Spring Boot 3.2+，Java 17+，MyBatis-Plus，Lombok。
+- **数据库**：MySQL 8.0。
+- **前端**：Vue 3（Composition API、`<script setup>`），Vite，Ant Design Vue，Axios。
+
+## API 与异常
+
+- RESTful 风格设计接口。
+- 统一响应体：`Result<T>`（或项目内等价封装），成功与失败字段含义一致。
+- 使用全局异常处理，避免在业务层散落重复的 try/catch 与 HTTP 状态拼装。
+
+## Spring 与代码风格
+
+- **依赖注入**：优先构造函数注入；避免 `@Autowired` 字段注入（测试可用 `@MockBean` / 构造注入配合）。
+- 分层清晰：Controller 薄、Service 承载业务、持久层用 MyBatis-Plus 约定与 Mapper。
+- 合理使用 Lombok（如 `@RequiredArgsConstructor` 配合 final 字段实现构造注入）。
+
+## 前端约定
+
+- 新组件使用 Composition API + `<script setup>`。
+- 与后端交互经 Axios，错误与加载状态处理与全局封装一致；表格/表单优先 Ant Design Vue 组件。
+
+## 示例：构造注入（推荐）
+
+```java
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    private final UserMapper userMapper;
+}
+```
+
+```java
+// 不推荐：字段注入
+@Service
+public class UserService {
+    @Autowired
+    private UserMapper userMapper;
+}
+```
