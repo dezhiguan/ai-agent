@@ -1,11 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import {
-  HistoryOutlined,
-  LeftOutlined,
-  RightOutlined,
-  SendOutlined,
-} from '@ant-design/icons-vue'
+import { LeftOutlined, RightOutlined, SendOutlined } from '@ant-design/icons-vue'
 import { message, Modal } from 'ant-design-vue'
 import {
   fetchQuestionPage,
@@ -13,7 +8,6 @@ import {
   type QuestionPageVo,
   type QuizJudgeResultVo,
 } from '@/api/quiz'
-import { RouterLink } from 'vue-router'
 
 type Choice = 'A' | 'B' | 'C' | 'D'
 
@@ -261,37 +255,6 @@ onMounted(loadQuestions)
   text-align: center;
   margin-bottom: 1.5rem;
   position: relative;
-}
-
-.header-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-
-.nav-history {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  font-size: 0.9rem;
-  color: #f0e6d8;
-  border: 1px solid rgba(185, 58, 47, 0.45);
-  border-radius: 999px;
-  background: rgba(26, 18, 14, 0.35);
-  text-decoration: none;
-  letter-spacing: 0.08em;
-  transition:
-    background 0.2s,
-    border-color 0.2s;
-}
-
-.nav-history:hover {
-  color: #fff;
-  border-color: rgba(240, 230, 216, 0.45);
-  background: rgba(185, 58, 47, 0.28);
 }
 
 .title-wrap {
