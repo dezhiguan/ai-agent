@@ -3,6 +3,7 @@ package com.threekingdoms.quiz.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -72,7 +73,7 @@ class QuizServiceImplTest {
     judged.setCorrectByQuestionId(
         new LinkedHashMap<>(Map.of(1, true, 2, true, 3, true)));
     judged.setWrongExplanations(new ArrayList<>());
-    when(quizQuestionService.judgeAnswers(any())).thenReturn(judged);
+    when(quizQuestionService.judgeAnswers(any(), eq(USER_ID))).thenReturn(judged);
 
     QuizJudgeResultVo result = quizService.submitAnswer(request);
 
@@ -85,7 +86,7 @@ class QuizServiceImplTest {
     assertEquals(30, recordCap.getValue().getScore());
     assertEquals(USER_ID, recordCap.getValue().getUserId());
 
-    verify(quizQuestionService).judgeAnswers(judgeAnswersCaptor.capture());
+    verify(quizQuestionService).judgeAnswers(judgeAnswersCaptor.capture(), eq(USER_ID));
     Map<Integer, String> expected = Map.of(1, "A", 2, "B", 3, "C");
     assertEquals(expected, judgeAnswersCaptor.getValue());
   }
@@ -104,7 +105,7 @@ class QuizServiceImplTest {
             new WrongQuestionExplanationVo(1, "题1", "解析1"),
             new WrongQuestionExplanationVo(2, "题2", "解析2"),
             new WrongQuestionExplanationVo(3, "题3", "解析3")));
-    when(quizQuestionService.judgeAnswers(any())).thenReturn(judged);
+    when(quizQuestionService.judgeAnswers(any(), eq(USER_ID))).thenReturn(judged);
 
     QuizJudgeResultVo result = quizService.submitAnswer(request);
 
@@ -128,7 +129,7 @@ class QuizServiceImplTest {
         new LinkedHashMap<>(Map.of(1, true, 2, true, 3, false)));
     judged.setWrongExplanations(
         List.of(new WrongQuestionExplanationVo(3, "第三题题干", "第三题解析")));
-    when(quizQuestionService.judgeAnswers(any())).thenReturn(judged);
+    when(quizQuestionService.judgeAnswers(any(), eq(USER_ID))).thenReturn(judged);
 
     QuizJudgeResultVo result = quizService.submitAnswer(request);
 

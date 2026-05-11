@@ -37,7 +37,8 @@ public class QuizServiceImpl implements QuizService {
       answersByQuestionId.put(Math.toIntExact(item.getQuestionId()), item.getAnswer());
     }
 
-    QuizJudgeResultVo result = quizQuestionService.judgeAnswers(answersByQuestionId);
+    QuizJudgeResultVo result =
+        quizQuestionService.judgeAnswers(answersByQuestionId, request.getUserId());
 
     QuizRecord record = new QuizRecord();
     record.setUserId(request.getUserId());

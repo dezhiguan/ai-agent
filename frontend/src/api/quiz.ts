@@ -24,6 +24,8 @@ export interface QuizJudgeResultVo {
     questionId: number
     stem: string | null
     explanation: string
+    /** ai=诸葛亮大模型（可含历史战绩工具）；db=题库原文；missing=题目不存在 */
+    source?: 'ai' | 'db' | 'missing'
   }>
   recordId: number | null
 }

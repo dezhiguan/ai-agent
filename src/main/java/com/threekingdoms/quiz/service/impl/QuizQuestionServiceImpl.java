@@ -47,7 +47,7 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
   }
 
   @Override
-  public QuizJudgeResultVo judgeAnswers(Map<Integer, String> answersByQuestionId) {
+  public QuizJudgeResultVo judgeAnswers(Map<Integer, String> answersByQuestionId, Long userId) {
     QuizJudgeResultVo result = new QuizJudgeResultVo();
     if (answersByQuestionId == null || answersByQuestionId.isEmpty()) {
       return result;
@@ -84,12 +84,13 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
         total += SCORE_PER_QUESTION;
       } else {
         if (question != null) {
-          String explanation = resolveWrongExplanation(question, entry.getValue());
           result.getWrongExplanations()
-              .add(new WrongQuestionExplanationVo(questionId, question.getStem(), explanation));
+              .add(buildWrongExplanationVo(questionId, question, entry.getValue(), userId));
         } else {
           result.getWrongExplanations()
-              .add(new WrongQuestionExplanationVo(questionId, null, MISSING_QUESTION_HINT));
+              .add(
+                  new WrongQuestionExplanationVo(
+                      questionId, null, MISSING_QUESTION_HINT, "missing"));
         }
       }
     }
@@ -99,15 +100,23 @@ public class QuizQuestionServiceImpl extends ServiceImpl<QuizQuestionMapper, Qui
     return result;
   }
 
-  /**
-   * 答错时优先使用诸葛亮 AI 解析；若未启用、调用失败或返回空，则回退为题库原文解析。
-   */
-  private String resolveWrongExplanation(QuizQuestion question, String userAnswer) {
-    String ai = zhugeLiangAssistantService.explainWrongAnswer(question, userAnswer);
+  /** 答错时优先使用诸葛亮 AI（可 Tool Calling 拉历史战绩）；失败或未启用则回退题库原文。 */
+  private static final String SOURCE_AI = "ai";
+
+  private static final String SOURCE_DB = "db";
+
+  private WrongQuestionExplanationVo buildWrongExplanationVo(
+      Integer questionId, QuizQuestion question, String userAnswer, Long userId) {
+    String ai = zhugeLiangAssistantService.explainWrongAnswer(question, userAnswer, userId);
     if (StringUtils.hasText(ai)) {
-      return ai.trim();
+      return new WrongQuestionExplanationVo(
+          questionId, question.getStem(), ai.trim(), SOURCE_AI);
     }
-    return safeExplanation(question.getExplanation());
+    return new WrongQuestionExplanationVo(
+        questionId,
+        question.getStem(),
+        safeExplanation(question.getExplanation()),
+        SOURCE_DB);
   }
 
   private static String safeExplanation(String explanation) {

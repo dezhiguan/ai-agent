@@ -1,5 +1,6 @@
 package com.threekingdoms.quiz.service.impl;
 
+import com.threekingdoms.quiz.ai.ZhugeLiangQuizTools;
 import com.threekingdoms.quiz.config.properties.ZhugeLiangAiProperties;
 import com.threekingdoms.quiz.entity.QuizQuestion;
 import com.threekingdoms.quiz.service.ZhugeLiangAssistantService;
@@ -15,7 +16,17 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class ZhugeLiangAssistantServiceImpl implements ZhugeLiangAssistantService {
 
-  private static final String SYSTEM_PROMPT =
+  private static final String SYSTEM_PROMPT_WITH_TOOLS =
+      """
+      你是三国时期的丞相诸葛亮（孔明），精通兵法史传与《三国演义》典故。
+      用户在做「三国演义」测验时答错了本题。你必须先使用工具 getUserQuizHistorySummary，
+      传入消息中给出的【当前用户ID】，查询该用户真实历史战绩后再撰写点评：可适度对比以往得分、鼓励进步或提醒巩固，
+      仍需紧扣题干与选项说明错因，勿编造战绩数据中不存在的事实。
+      语气庄重谦和，可略带文言色彩；避免现代网络用语；不要编造与题干无关的情节。
+      只输出一段简短解析（建议 100～180 字），直接正文，不要标题、列表或“孔明曰”套话。
+      """;
+
+  private static final String SYSTEM_PROMPT_PLAIN =
       """
       你是三国时期的丞相诸葛亮（孔明），精通兵法史传与《三国演义》典故。
       用户在做「三国演义」测验时答错了题。请你用诸葛亮的第一人称口吻作答：
@@ -27,8 +38,10 @@ public class ZhugeLiangAssistantServiceImpl implements ZhugeLiangAssistantServic
 
   private final ZhugeLiangAiProperties properties;
 
+  private final ZhugeLiangQuizTools zhugeLiangQuizTools;
+
   @Override
-  public String explainWrongAnswer(QuizQuestion question, String userAnswer) {
+  public String explainWrongAnswer(QuizQuestion question, String userAnswer, Long userId) {
     if (!properties.isEnabled()) {
       return null;
     }
@@ -38,15 +51,18 @@ public class ZhugeLiangAssistantServiceImpl implements ZhugeLiangAssistantServic
       return null;
     }
     try {
-      String userMessage = buildUserMessage(question, userAnswer);
-      String content =
+      String userMessage = buildUserMessage(question, userAnswer, userId);
+      boolean useTools = userId != null;
+      var request =
           builder
               .build()
               .prompt()
-              .system(SYSTEM_PROMPT)
-              .user(userMessage)
-              .call()
-              .content();
+              .system(useTools ? SYSTEM_PROMPT_WITH_TOOLS : SYSTEM_PROMPT_PLAIN)
+              .user(userMessage);
+      if (useTools) {
+        request = request.tools(zhugeLiangQuizTools);
+      }
+      String content = request.call().content();
       if (content == null || !StringUtils.hasText(content)) {
         return null;
       }
@@ -57,14 +73,18 @@ public class ZhugeLiangAssistantServiceImpl implements ZhugeLiangAssistantServic
     }
   }
 
-  private static String buildUserMessage(QuizQuestion q, String userAnswer) {
+  private static String buildUserMessage(QuizQuestion q, String userAnswer, Long userId) {
     String ua = userAnswer == null || userAnswer.isBlank() ? "（未作答或空白）" : userAnswer.trim();
     String ref =
         q.getExplanation() == null || q.getExplanation().isBlank()
             ? "（题库暂无参考解析）"
             : q.getExplanation().trim();
+    String userLine =
+        userId != null
+            ? "【当前用户ID】%d（调用工具 getUserQuizHistorySummary 时必须使用该 ID）\n".formatted(userId)
+            : "";
     return """
-        【题干】
+        %s【题干】
         %s
 
         【选项】
@@ -80,6 +100,7 @@ public class ZhugeLiangAssistantServiceImpl implements ZhugeLiangAssistantServic
         %s
         """
         .formatted(
+            userLine,
             q.getStem(),
             nullToDash(q.getOptionA()),
             nullToDash(q.getOptionB()),

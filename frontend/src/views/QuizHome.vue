@@ -213,6 +213,11 @@ onMounted(loadQuestions)
 
         <template v-if="(lastResult.wrongExplanations?.length ?? 0) > 0">
           <p class="result-section-title">错题解析</p>
+          <p class="result-source-hint">
+            带
+            <a-tag color="volcano" class="hint-tag">诸葛亮 AI</a-tag>
+            标签表示由大模型生成（已开启时可结合历史战绩工具）；「题库」为书本解析原文。
+          </p>
           <a-list
             class="wrong-list"
             size="small"
@@ -222,10 +227,17 @@ onMounted(loadQuestions)
               <a-list-item class="wrong-item">
                 <a-list-item-meta>
                   <template #title>
-                    <span class="wrong-stem-label">第 {{ item.questionId }} 题</span>
-                    <span v-if="item.stem" class="wrong-stem">{{
-                      item.stem
-                    }}</span>
+                    <span class="wrong-title-row">
+                      <span class="wrong-stem-label">第 {{ item.questionId }} 题</span>
+                      <a-tag v-if="item.source === 'ai'" color="volcano" class="src-tag"
+                        >诸葛亮 AI</a-tag
+                      >
+                      <a-tag v-else-if="item.source === 'missing'" color="default" class="src-tag"
+                        >题目缺失</a-tag
+                      >
+                      <a-tag v-else color="default" class="src-tag">题库</a-tag>
+                    </span>
+                    <span v-if="item.stem" class="wrong-stem">{{ item.stem }}</span>
                   </template>
                   <template #description>
                     <div class="wrong-explanation">{{ item.explanation }}</div>
@@ -426,10 +438,35 @@ onMounted(loadQuestions)
 }
 
 .result-section-title {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.35rem;
   font-weight: 600;
   color: #5c4033;
   letter-spacing: 0.06em;
+}
+
+.result-source-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(42, 34, 28, 0.65);
+}
+
+.result-source-hint .hint-tag {
+  margin: 0 4px;
+  vertical-align: middle;
+}
+
+.wrong-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.src-tag {
+  margin: 0 !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
 }
 
 .wrong-list :deep(.ant-list-item) {

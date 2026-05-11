@@ -15,6 +15,7 @@ public interface QuizQuestionService extends IService<QuizQuestion> {
    * 批量判题：Key 为题目 ID，Value 为用户选项（A/B/C/D）。
    *
    * @param answersByQuestionId 可为 null（按空答卷处理，避免 NPE）
+   * @param userId 答题用户；用于错题 AI 工具调用查询历史战绩，可为 null
    */
-  QuizJudgeResultVo judgeAnswers(Map<Integer, String> answersByQuestionId);
+  QuizJudgeResultVo judgeAnswers(Map<Integer, String> answersByQuestionId, Long userId);
 }
